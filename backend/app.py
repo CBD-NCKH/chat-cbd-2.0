@@ -12,7 +12,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 app = Flask(__name__, template_folder='templates')  # Đặt thư mục chứa HTML templates
-CORS(app)  # Kích hoạt CORS cho toàn bộ ứng dụng Flask
+CORS(app, resources={r"/api/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
 # Route mặc định để render giao diện
 @app.route('/')
