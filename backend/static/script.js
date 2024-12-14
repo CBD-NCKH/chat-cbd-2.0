@@ -21,16 +21,16 @@ async function sendMessage() {
     userInput.value = '';
 
     try {
-        const response = await fetch('https://chat-cbd.onrender.com/api', {
+        const response = await fetch('https://chat-cbd-2-0.onrender.com/api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: userMessage }),
         });
 
         const data = await response.json();
-        addMessage(data.reply || 'C� l?i x?y ra.', 'bot', true);
+        addMessage(data.reply || 'Có lỗi xảy ra.', 'bot', true);
     } catch (error) {
-        addMessage('Kh�ng th? k?t n?i t?i server.', 'bot');
+        addMessage('Không thể kết nối tới server.', 'bot');
     }
 }
 
