@@ -1,46 +1,48 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS  # Import Flask-CORS
-from openai import OpenAI  # Import l?p OpenAI t? th� vi?n m?i
+from openai import OpenAI  # Import lớp OpenAI từ thư viện mới
 import os
 from dotenv import load_dotenv
 
-# Load API Key t? file .env
+# Load API Key từ file .env
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 
-# T?o m?t instance client OpenAI
+# Tạo một instance client OpenAI
 client = OpenAI(api_key=api_key)
 
-app = Flask(__name__, template_folder='templates')  # �?t th� m?c ch?a HTML templates
-CORS(app)  # K�ch ho?t CORS cho to�n b? ?ng d?ng Flask
+app = Flask(__name__, template_folder='templates')  # Đặt thư mục chứa HTML templates
+CORS(app)  # Kích hoạt CORS cho toàn bộ ứng dụng Flask
 
-# Route m?c �?nh �? render giao di?n
+# Route mặc định để render giao diện
 @app.route('/')
 def home():
-    return render_template('index.html')  # �?m b?o file index.html n?m trong th� m?c 'templates/'
+    return render_template('index.html')  # Đảm bảo file index.html nằm trong thư mục 'templates/'
 
-# API x? l? tin nh?n
+# API xử lý tin nhắn
 @app.route('/api', methods=['POST'])
 def api():
     try:
         data = request.json
         user_message = data.get("message")
 
-        # G?i y�u c?u t?i OpenAI API qua instance client
+        # Gửi yêu cầu tới OpenAI API qua instance client
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
-                    "role": "system", 
+                    "role": "system",
                     "content": (
-                        "B?n l� m?t tr? l? ?o (t�n l� ChatCBD, do Ch�u Ph�c Khang, Tr?n Ho�ng Thi�n Ph�c v� Nguy?n H?u Thi?n ph�t tri?n) gi?ng d?y ki?n th?c d? hi?u, chuy�n h? tr? c�c c�u h?i v? ki?n th?c t? ch��ng tr?nh gi�o d?c ph? th�ng c?a B? Gi�o d?c v� ��o t?o Vi?t Nam. (C� th? d�ng c? ti?ng anh v� ti?ng vi?t) "
-                        "Khi tr? l?i: "
-                        "1. Gi?i th�ch d? hi?u, chia nh? t?ng b�?c. "
-                        "2. Lu�n ��a ra v� d? th?c t? li�n quan �?n n?i dung. "
-                        "3. Nh?c r? ki?n th?c m� b?n gi?i th�ch n?m trong ch��ng tr?nh l?p m?y ng�y �?u c�u tr? l?i. "
-                        "- N?u ki?n th?c n?m trong s�ch gi�o khoa: �? c?p r? v� cung c?p th�m th�ng tin li�n quan. "
-                        "- N?u ki?n th?c kh�ng thu?c s�ch gi�o khoa: nh?n m?nh r?ng \"D� ki?n th?c n�y kh�ng thu?c s�ch gi�o khoa, t�i v?n c� th? h? tr? b?n �?y �? th�ng tin\". "
-                        "4. S? d?ng ng�n ng? th�n thi?n v� d? ti?p c?n."
+                        "Bạn là một trợ lý ảo (tên là ChatCBD, do Châu Phúc Khang, Trần Hoàng Thiên Phúc và Nguyễn Hữu Thiện phát triển) "
+                        "giảng dạy kiến thức dễ hiểu, chuyên hỗ trợ các câu hỏi về kiến thức từ chương trình giáo dục phổ thông của Bộ Giáo dục và Đào tạo Việt Nam. "
+                        "(Có thể dùng cả tiếng Anh và tiếng Việt) "
+                        "Khi trả lời: "
+                        "1. Giải thích dễ hiểu, chia nhỏ từng bước. "
+                        "2. Luôn đưa ra ví dụ thực tế liên quan đến nội dung. "
+                        "3. Nhắc rõ kiến thức mà bạn giải thích nằm trong chương trình lớp mấy ngày đầu câu trả lời. "
+                        "- Nếu kiến thức nằm trong sách giáo khoa: đề cập rõ và cung cấp thêm thông tin liên quan. "
+                        "- Nếu kiến thức không thuộc sách giáo khoa: nhấn mạnh rằng \"Dù kiến thức này không thuộc sách giáo khoa, tôi vẫn có thể hỗ trợ bạn đầy đủ thông tin\". "
+                        "4. Sử dụng ngôn ngữ thân thiện và dễ tiếp cận."
                     )
                 },
                 {"role": "user", "content": user_message}
@@ -49,13 +51,13 @@ def api():
             temperature=0.7
         )
 
-        # L?y ph?n h?i t? API
+        # Lấy phản hồi từ API
         bot_reply = response.choices[0].message.content
         return jsonify({"reply": bot_reply})
 
     except Exception as e:
-        print(f"L?i: {e}")
-        return jsonify({"error": "C� l?i x?y ra khi k?t n?i OpenAI"}), 500
+        print(f"Lỗi: {e}")
+        return jsonify({"error": "Có lỗi xảy ra khi kết nối OpenAI"}), 500
 
 
 if __name__ == '__main__':
