@@ -7,7 +7,7 @@
     <!-- Import font Roboto Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <!-- Link to the updated style.css -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- Import Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -17,11 +17,11 @@
             <div id="messages"></div>
         </div>
         <div id="input-area">
-            <input type="text" id="user-input" placeholder="Nh?p tin nh?n...">
-            <button id="send-button">G?i</button>
+            <input type="text" id="user-input" placeholder="Nhập tin nhắn...">
+            <button id="send-button">Gửi</button>
         </div>
     </div>
     <!-- Link to your script.js -->
-    <script src="script.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
