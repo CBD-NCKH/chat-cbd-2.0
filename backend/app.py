@@ -5,7 +5,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import spacy
-from underthesea import word_tokenize, pos_tag
+from pyvi import ViTokenizer, ViPosTagger
 
 # Tải mô hình ngôn ngữ spaCy
 nlp = spacy.load("en_core_web_sm")
@@ -26,11 +26,11 @@ def extract_keywords_spacy(message):
     keywords = [token.text for token in doc if token.pos_ in {"NOUN", "VERB", "ADJ"}]
     return list(set(keywords))
 
-# Hàm trích xuất từ khóa tiếng Việt
-def extract_keywords_underthesea(message):
-    tokens = word_tokenize(message, format="text")  # Tokenize văn bản tiếng Việt
-    tagged_words = pos_tag(tokens)  # POS tagging
-    keywords = [word for word, pos in tagged_words if pos in {"N", "V", "A"}]  # Danh từ, động từ, tính từ
+# Hàm trích xuất từ khóa tiếng Việt bằng Pyvi
+def extract_keywords_pyvi(message):
+    tokens = ViTokenizer.tokenize(message)  # Tokenize văn bản tiếng Việt
+    tagged_words = ViPosTagger.postagging(tokens)  # POS tagging
+    keywords = [word for word, pos in zip(tagged_words[0], tagged_words[1]) if pos in {"N", "V", "A"}]  # Danh từ, động từ, tính từ
     return list(set(keywords))
 
 # Hàm xử lý ngôn ngữ đa ngôn ngữ
@@ -42,8 +42,8 @@ def extract_keywords_multilingual(message):
         keywords_en = []
     
     try:
-        # Dùng underthesea cho tiếng Việt
-        keywords_vi = extract_keywords_underthesea(message)
+        # Dùng Pyvi cho tiếng Việt
+        keywords_vi = extract_keywords_pyvi(message)
     except Exception:
         keywords_vi = []
     
@@ -85,7 +85,7 @@ def api():
         data = request.json
         user_message = data.get("message")
 
-        # Trích xuất từ khóa từ user_message bằng spaCy và underthesea
+        # Trích xuất từ khóa từ user_message bằng spaCy và Pyvi
         keywords = extract_keywords_multilingual(user_message)
 
         # Truy vấn dữ liệu SQLite với từ khóa
