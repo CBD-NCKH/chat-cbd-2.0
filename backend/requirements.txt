@@ -4,3 +4,5 @@ python-dotenv
 openai
 gunicorn
 sqlite3
+spacy
+underthesea
