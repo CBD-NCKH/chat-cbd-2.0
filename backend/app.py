@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 import spacy
 from pyvi import ViTokenizer, ViPosTagger
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # Tải mô hình ngôn ngữ spaCy
 nlp = spacy.load("en_core_web_sm")
@@ -17,6 +19,25 @@ api_key = os.getenv("OPENAI_API_KEY")
 # Tạo một instance client OpenAI
 client = OpenAI(api_key=api_key)
 
+# Kết nối Google Sheets
+def connect_google_sheet(sheet_name):
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    client = gspread.authorize(creds)
+    sheet = client.open(sheet_name).sheet1
+    return sheet
+
+# Hàm lưu lịch sử hội thoại vào Google Sheets
+def save_to_google_sheet(sheet, role, content):
+    sheet.append_row([role, content])
+
+def get_latest_conversation(sheet, max_rows=4):
+    rows = sheet.get_all_values()  # Lấy toàn bộ dữ liệu từ Google Sheets
+    if not rows:
+    rows = [["", ""]]  # Đặt giá trị mặc định nếu không có dữ liệu
+    return rows[-max_rows:] if len(rows) > max_rows else rows  # Lấy các dòng cuối cùng
+
+# Khởi tạo ứng dụng Flask    
 app = Flask(__name__, template_folder='templates')
 CORS(app, resources={r"/api/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
@@ -85,6 +106,14 @@ def api():
         data = request.json
         user_message = data.get("message")
 
+        sheet = connect_google_sheet("ChatHistory")
+
+        # Lấy các dòng hội thoại gần nhất từ Google Sheets
+        memory = get_latest_conversation(sheet, max_rows=4)
+
+        # Chuyển dữ liệu từ Google Sheets thành ngữ cảnh
+        memory_context = "\n".join([f"{row[0]}: {row[1]}" for row in memory])
+
         # Trích xuất từ khóa từ user_message bằng spaCy và Pyvi
         keywords = extract_keywords_multilingual(user_message)
 
@@ -95,6 +124,7 @@ def api():
         db_context = "\n".join([f"Row {i+1}: {row}" for i, row in enumerate(db_result)])
         context = (
             f"Dữ liệu từ cơ sở dữ liệu:\n{db_context}\n\n"
+            f"Lịch sử hội thoại:\n{memory_context}\n\n"
             f"Câu hỏi của người dùng: {user_message}"
         )
 
@@ -125,6 +155,11 @@ def api():
 
         # Lấy phản hồi từ API
         bot_reply = response.choices[0].message.content
+
+        # Lưu lịch sử hội thoại vào Google Sheets  
+        save_to_google_sheet(sheet, "user", user_message)
+        save_to_google_sheet(sheet, "assistant", bot_reply)
+
         return jsonify({"reply": bot_reply})
 
     except Exception as e:
