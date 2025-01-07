@@ -112,7 +112,8 @@ def api():
         memory = get_latest_conversation(sheet, max_rows=4)
 
         # Chuyển dữ liệu từ Google Sheets thành ngữ cảnh
-        memory_context = "\n".join([f"{row[0]}: {row[1]}" for row in memory])
+        memory_context = "\n".join([f"{row[0]}: {row[1]}" for row in memory if len(row) >= 2])
+
 
         # Trích xuất từ khóa từ user_message bằng spaCy và Pyvi
         keywords = extract_keywords_multilingual(user_message)
