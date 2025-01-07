@@ -10,13 +10,13 @@
 </head>
 <body>
     <div id="chat-container">
-        <button id="theme-toggle-button">🌙</button>
+        <button id="theme-toggle-button">🌙</button> <!-- Nút chuyển chế độ -->
         <div id="chatbox">
-            <div id="messages"></div>
+            <div id="messages"></div> <!-- Khu vực hiển thị tin nhắn -->
         </div>
         <div id="input-area">
-            <input type="text" id="user-input" placeholder="Nhập tin nhắn...">
-            <button id="send-button">Gửi</button>
+            <input type="text" id="user-input" placeholder="Nhập tin nhắn..."> <!-- Ô nhập -->
+            <button id="send-button">Gửi</button> <!-- Nút gửi -->
         </div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
