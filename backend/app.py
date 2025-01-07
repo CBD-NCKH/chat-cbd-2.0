@@ -34,7 +34,7 @@ def save_to_google_sheet(sheet, role, content):
 def get_latest_conversation(sheet, max_rows=4):
     rows = sheet.get_all_values()  # Lấy toàn bộ dữ liệu từ Google Sheets
     if not rows:
-    rows = [["", ""]]  # Đặt giá trị mặc định nếu không có dữ liệu
+        rows = [["", ""]]  # Đặt giá trị mặc định nếu không có dữ liệu
     return rows[-max_rows:] if len(rows) > max_rows else rows  # Lấy các dòng cuối cùng
 
 # Khởi tạo ứng dụng Flask    
