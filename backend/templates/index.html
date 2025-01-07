@@ -15,10 +15,11 @@
             <div id="messages"></div> <!-- Khu vực hiển thị tin nhắn -->
         </div>
         <div id="input-area">
-            <input type="text" id="user-input" placeholder="Nhập tin nhắn..."> <!-- Ô nhập -->
-            <button id="send-button">Gửi</button> <!-- Nút gửi -->
+            <input type="text" id="user-input" placeholder="Nhập tin nhắn..." autocomplete="off"> <!-- Ô nhập -->
+            <button id="send-button" disabled>Gửi</button> <!-- Nút gửi -->
         </div>
     </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Sử dụng `defer` để đảm bảo JavaScript được tải sau khi DOM sẵn sàng -->
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
