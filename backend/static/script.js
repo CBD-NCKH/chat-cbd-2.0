@@ -13,43 +13,36 @@ function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         content = marked.parse(content);
     }
 
-    if (sender === 'bot') {
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = content;
-        const nodes = Array.from(tempContainer.childNodes);
-
-        let currentNodeIndex = 0;
-        let currentCharIndex = 0;
-
-        const typeEffect = setInterval(() => {
-            if (currentNodeIndex < nodes.length) {
-                const currentNode = nodes[currentNodeIndex];
-                if (currentNode.nodeType === Node.TEXT_NODE) {
-                    if (currentCharIndex < currentNode.textContent.length) {
-                        messageDiv.appendChild(document.createTextNode(currentNode.textContent[currentCharIndex]));
-                        currentCharIndex++;
-                    } else {
-                        currentCharIndex = 0;
-                        currentNodeIndex++;
-                    }
-                } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
-                    messageDiv.appendChild(currentNode.cloneNode(true));
-                    currentNodeIndex++;
-                }
-            } else {
-                clearInterval(typeEffect);
-            }
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }, typingSpeed);
-    } else {
-        messageDiv.innerHTML = content;
-    }
-
+    messageDiv.textContent = content;
     messagesDiv.appendChild(messageDiv);
+
+    // Cuộn xuống cuối
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Chuyển chế độ sáng/tối
+// Hàm gửi tin nhắn
+function sendMessage() {
+    const userMessage = userInput.value.trim();
+    if (!userMessage) return; // Nếu input rỗng, không làm gì
+
+    addMessage(userMessage, 'user'); // Thêm tin nhắn người dùng
+    userInput.value = ''; // Xóa nội dung trong ô input
+
+    // Phản hồi từ bot (thay thế bằng API nếu cần)
+    addMessage('Xin chào! Đây là phản hồi mẫu.', 'bot');
+}
+
+// Xử lý sự kiện click
+sendButton.addEventListener('click', sendMessage);
+
+// Xử lý sự kiện nhấn Enter
+userInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// Chuyển đổi chế độ sáng/tối
 themeToggleButton.addEventListener('click', () => {
     body.classList.toggle('light-mode');
     themeToggleButton.textContent = body.classList.contains('light-mode') ? '🌞' : '🌙';
