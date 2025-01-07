@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat CBD 2.0</title>
-    <!-- Import font Roboto Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Link to the updated style.css -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Import Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div id="chat-container">
+        <button id="theme-toggle-button">🌙</button>
         <div id="chatbox">
             <div id="messages"></div>
         </div>
@@ -21,7 +19,6 @@
             <button id="send-button">Gửi</button>
         </div>
     </div>
-    <!-- Link to your script.js -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

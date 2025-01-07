@@ -1,8 +1,10 @@
 const sendButton = document.getElementById('send-button');
 const userInput = document.getElementById('user-input');
 const messagesDiv = document.getElementById('messages');
+const themeToggleButton = document.getElementById('theme-toggle-button');
+const body = document.body;
 
-// Hàm thêm tin nhắn vào giao diện với hiệu ứng gõ từng ký tự
+// Thêm tin nhắn vào giao diện
 function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
@@ -49,67 +51,8 @@ function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Hàm hiển thị hiệu ứng "đang gõ"
-function showTypingIndicator() {
-    const typingDiv = document.createElement('div');
-    typingDiv.classList.add('message', 'bot', 'typing');
-    typingDiv.innerHTML = `
-        <div class="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    `;
-    messagesDiv.appendChild(typingDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-// Hàm xóa hiệu ứng "đang gõ"
-function removeTypingIndicator() {
-    const typingDiv = document.querySelector('.typing');
-    if (typingDiv) {
-        typingDiv.remove();
-    }
-}
-
-// Hàm gửi yêu cầu tới API
-async function sendMessage() {
-    const userMessage = userInput.value.trim();
-    if (!userMessage) return;
-
-    addMessage(userMessage, 'user');
-    userInput.value = '';
-
-    showTypingIndicator(); // Hiển thị hiệu ứng "đang gõ"
-
-    try {
-        const response = await fetch('https://chat-cbd-2-0.onrender.com/api', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userMessage }),
-        });
-
-        const data = await response.json();
-
-        removeTypingIndicator(); // Xóa hiệu ứng "đang gõ"
-
-        if (data.reply) {
-            addMessage(data.reply, 'bot', true, 30); // Tốc độ gõ từng ký tự
-        } else {
-            addMessage('Không nhận được phản hồi từ server.', 'bot');
-        }
-    } catch (error) {
-        removeTypingIndicator(); // Xóa hiệu ứng "đang gõ"
-        addMessage('Không thể kết nối tới server.', 'bot');
-    }
-}
-
-// Xử lý sự kiện khi nhấn nút "Gửi"
-sendButton.addEventListener('click', sendMessage);
-
-// Xử lý sự kiện khi nhấn phím Enter
-userInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
+// Xử lý nút chuyển chế độ
+themeToggleButton.addEventListener('click', () => {
+    body.classList.toggle('light-mode');
+    themeToggleButton.textContent = body.classList.contains('light-mode') ? '🌞' : '🌙';
 });
