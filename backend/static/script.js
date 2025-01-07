@@ -4,7 +4,7 @@ const messagesDiv = document.getElementById('messages');
 const themeToggleButton = document.getElementById('theme-toggle-button');
 const body = document.body;
 
-// Thêm tin nhắn vào giao diện
+// Hàm thêm tin nhắn
 function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
@@ -43,15 +43,13 @@ function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         }, typingSpeed);
     } else {
         messageDiv.innerHTML = content;
-        messagesDiv.appendChild(messageDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
     messagesDiv.appendChild(messageDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Xử lý nút chuyển chế độ
+// Chuyển chế độ sáng/tối
 themeToggleButton.addEventListener('click', () => {
     body.classList.toggle('light-mode');
     themeToggleButton.textContent = body.classList.contains('light-mode') ? '🌞' : '🌙';
