@@ -138,6 +138,22 @@ def query_sqlite_with_keywords(table_name, keywords):
 
     return rows
 
+# Xử lý lỗi 404 - Not Found
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Resource not found."}), 404
+
+# Xử lý lỗi 500 - Internal Server Error
+@app.errorhandler(500)
+def internal_server_error(error):
+    return jsonify({"error": "Internal server error. Please try again later."}), 500
+
+# Xử lý các lỗi khác
+@app.errorhandler(Exception)
+def handle_exception(error):
+    print(f"Unexpected error: {error}")  # Log lỗi chi tiết trên server
+    return jsonify({"error": "An unexpected error occurred."}), 500
+
 # Route mặc định để render giao diện
 @app.route('/')
 def home():
