@@ -3,6 +3,16 @@ const userInput = document.getElementById('user-input');
 const messagesDiv = document.getElementById('messages');
 const themeToggleButton = document.getElementById('theme-toggle-button');
 const body = document.body;
+const registerButton = document.getElementById('register-btn');
+const loginButton = document.getElementById('login-btn');
+const authContainer = document.getElementById('auth-container');
+const chatContainer = document.getElementById('chat-container');
+
+// Hàm chuyển đổi giữa giao diện đăng nhập/đăng ký và chat
+function showChat() {
+    authContainer.style.display = 'none';
+    chatContainer.style.display = 'block';
+}
 
 // Hàm thêm tin nhắn vào giao diện
 function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
@@ -120,4 +130,43 @@ userInput.addEventListener('keypress', (event) => {
 themeToggleButton.addEventListener('click', () => {
     body.classList.toggle('light-mode');
     themeToggleButton.textContent = body.classList.contains('light-mode') ? '🌞' : '🌙';
+});
+
+// Xử lý sự kiện Đăng ký
+registerButton.addEventListener('click', async () => {
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+
+    const response = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        alert('Đăng ký thành công! Bạn có thể đăng nhập.');
+    } else {
+        alert(data.error || 'Đăng ký thất bại.');
+    }
+});
+
+// Xử lý sự kiện Đăng nhập
+loginButton.addEventListener('click', async () => {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    const response = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        alert('Đăng nhập thành công!');
+        showChat();
+    } else {
+        alert(data.error || 'Đăng nhập thất bại.');
+    }
 });

@@ -1,6 +1,7 @@
 import sqlite3
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
+from flask_session import Session
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -8,6 +9,7 @@ import spacy
 from pyvi import ViTokenizer, ViPosTagger
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import hashlib
 
 # Tải mô hình ngôn ngữ spaCy
 nlp = spacy.load("en_core_web_sm")
@@ -27,18 +29,46 @@ def connect_google_sheet(sheet_name):
     sheet = client.open(sheet_name).sheet1
     return sheet
 
+# Hash mật khẩu để lưu trữ và xác thực an toàn
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# Hàm tạo tài khoản người dùng
+def create_account(sheet, username, password):
+    users = sheet.get_all_values()
+    for row in users:
+        if len(row) >= 1 and row[0] == username:  # Kiểm tra nếu username đã tồn tại
+            return False, "Username already exists."
+
+    hashed_password = hash_password(password)  # Hash mật khẩu
+    sheet.append_row([username, hashed_password, "", ""])
+    return True, "Account created successfully."
+
+# Hàm xác thực người dùng
+def authenticate_user(sheet, username, password):
+    users = sheet.get_all_values()
+    hashed_password = hash_password(password)
+
+    for row in users:
+        if len(row) >= 2 and row[0] == username and row[1] == hashed_password:
+            return True
+    return False
+
 # Hàm lưu lịch sử hội thoại vào Google Sheets
-def save_to_google_sheet(sheet, role, content):
-    sheet.append_row([role, content])
+def save_to_google_sheet(sheet, username, role, content):
+    sheet.append_row([username, role, content])
 
-def get_latest_conversation(sheet, max_rows=4):
-    rows = sheet.get_all_values()  # Lấy toàn bộ dữ liệu từ Google Sheets
-    if not rows:
-        rows = [["", ""]]  # Đặt giá trị mặc định nếu không có dữ liệu
-    return rows[-max_rows:] if len(rows) > max_rows else rows  # Lấy các dòng cuối cùng
+# Hàm lấy hội thoại gần nhất của người dùng
+def get_user_conversation(sheet, username, max_rows=4):
+    rows = sheet.get_all_values()
+    user_rows = [row for row in rows if len(row) >= 3 and row[0] == username]
+    return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
 
-# Khởi tạo ứng dụng Flask    
+# Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates')
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey')
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 CORS(app, resources={r"/api/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
 # Hàm trích xuất từ khóa tiếng Anh
@@ -49,26 +79,23 @@ def extract_keywords_spacy(message):
 
 # Hàm trích xuất từ khóa tiếng Việt bằng Pyvi
 def extract_keywords_pyvi(message):
-    tokens = ViTokenizer.tokenize(message)  # Tokenize văn bản tiếng Việt
-    tagged_words = ViPosTagger.postagging(tokens)  # POS tagging
-    keywords = [word for word, pos in zip(tagged_words[0], tagged_words[1]) if pos in {"N", "V", "A"}]  # Danh từ, động từ, tính từ
+    tokens = ViTokenizer.tokenize(message)
+    tagged_words = ViPosTagger.postagging(tokens)
+    keywords = [word for word, pos in zip(tagged_words[0], tagged_words[1]) if pos in {"N", "V", "A"}]
     return list(set(keywords))
 
 # Hàm xử lý ngôn ngữ đa ngôn ngữ
 def extract_keywords_multilingual(message):
     try:
-        # Dùng spaCy cho tiếng Anh
         keywords_en = extract_keywords_spacy(message)
     except Exception:
         keywords_en = []
-    
+
     try:
-        # Dùng Pyvi cho tiếng Việt
         keywords_vi = extract_keywords_pyvi(message)
     except Exception:
         keywords_vi = []
-    
-    # Kết hợp từ khóa tiếng Anh và tiếng Việt
+
     return list(set(keywords_en + keywords_vi))
 
 # Hàm truy vấn SQLite theo từ khóa
@@ -76,17 +103,13 @@ def query_sqlite_with_keywords(table_name, keywords):
     conn = sqlite3.connect("chatbot.db")
     cursor = conn.cursor()
 
-    # Tạo điều kiện tìm kiếm theo từ khóa
     conditions = []
     params = []
     for keyword in keywords:
         conditions.append(f"Chapter LIKE ? OR `Sub-topic` LIKE ?")
         params.extend([f"%{keyword}%", f"%{keyword}%"])
 
-    # Gộp điều kiện bằng OR
     where_clause = " OR ".join(conditions)
-
-    # Thực hiện câu truy vấn
     query = f"SELECT * FROM {table_name} WHERE {where_clause}"
     cursor.execute(query, params)
     rows = cursor.fetchall()
@@ -99,29 +122,68 @@ def query_sqlite_with_keywords(table_name, keywords):
 def home():
     return render_template('index.html')
 
+# API xử lý đăng ký
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    sheet = connect_google_sheet("ChatHistory")
+    success, message = create_account(sheet, username, password)
+
+    if success:
+        return jsonify({"message": message}), 201
+    else:
+        return jsonify({"error": message}), 400
+
+# API xử lý đăng nhập
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    sheet = connect_google_sheet("ChatHistory")
+    if authenticate_user(sheet, username, password):
+        session['username'] = username
+        session['password'] = password
+        return jsonify({"message": "Login successful."}), 200
+    else:
+        return jsonify({"error": "Invalid username or password."}), 401
+
 # API xử lý tin nhắn
 @app.route('/api', methods=['POST'])
 def api():
     try:
-        data = request.json
-        user_message = data.get("message")
+        if 'username' not in session or 'password' not in session:
+            return jsonify({"error": "Unauthorized. Please log in first."}), 401
+
+        username = session['username']
+        password = session['password']
 
         sheet = connect_google_sheet("ChatHistory")
 
-        # Lấy các dòng hội thoại gần nhất từ Google Sheets
-        memory = get_latest_conversation(sheet, max_rows=4)
+        # Xác thực người dùng
+        if not authenticate_user(sheet, username, password):
+            return jsonify({"error": "Authentication failed."}), 401
+
+        data = request.json
+        user_message = data.get("message")
+
+        # Lấy các dòng hội thoại của người dùng từ Google Sheets
+        memory = get_user_conversation(sheet, username, max_rows=4)
 
         # Chuyển dữ liệu từ Google Sheets thành ngữ cảnh
-        memory_context = "\n".join([f"{row[0]}: {row[1]}" for row in memory if len(row) >= 2])
+        memory_context = "\n".join([f"{row[1]}: {row[2]}" for row in memory if len(row) >= 3])
 
-
-        # Trích xuất từ khóa từ user_message bằng spaCy và Pyvi
+        # Trích xuất từ khóa từ user_message
         keywords = extract_keywords_multilingual(user_message)
 
         # Truy vấn dữ liệu SQLite với từ khóa
         db_result = query_sqlite_with_keywords("DatasetTable", keywords)
 
-        # Tạo context từ dữ liệu SQLite và tin nhắn người dùng
+        # Tạo context từ dữ liệu
         db_context = "\n".join([f"Row {i+1}: {row}" for i, row in enumerate(db_result)])
         context = (
             f"Dữ liệu từ cơ sở dữ liệu:\n{db_context}\n\n"
@@ -129,7 +191,7 @@ def api():
             f"Câu hỏi của người dùng: {user_message}"
         )
 
-        # Gửi yêu cầu tới OpenAI API qua instance client
+        # Gửi yêu cầu tới OpenAI API
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -137,7 +199,7 @@ def api():
                     "role": "system",
                     "content": (
                         "Bạn là một trợ lý ảo (tên là ChatCBD 3.0, do Châu Phúc Khang và Trần Hoàng Thiên Phúc phát triển) chuyên hỗ trợ các câu hỏi liên quan đến Calculus BC. "
-                        "Bạn có cơ sở dữ liệu chứa các lý thuyết và kiến thức toán học liên quan. "
+                        "Bạn có cơ sở dữ liệu chứa các lý thuyết và kiến thức toán học liên quan. Chỉ khi nào câu hỏi của người dùng liên quan đến toán học bạn mới cần truy cập vào cơ sở dữ liệuliệu"
                         "Khi trả lời câu hỏi: "
                         "1. Phân chia câu trả lời thành 2 phần rõ ràng: "
                         "   - Phần 1: Trích dẫn cụ thể các lý thuyết có liên quan trực tiếp từ cơ sở dữ liệu của bạn (có thể bao gồm các định nghĩa, công thức) hoặc đoạn nội dung liên quan. Lưu ý phần trích dẫn bằng tiếng anh thì bỏ trong ngoặc kép đóng lại và bên cạnh đó ghi thêm 1 phần bản dịch của phần trích dẫn đó ngay tiếp theotheo"
@@ -154,12 +216,11 @@ def api():
             temperature=0.7
         )
 
-        # Lấy phản hồi từ API
         bot_reply = response.choices[0].message.content
 
-        # Lưu lịch sử hội thoại vào Google Sheets  
-        save_to_google_sheet(sheet, "user", user_message)
-        save_to_google_sheet(sheet, "assistant", bot_reply)
+        # Lưu lịch sử hội thoại vào Google Sheets
+        save_to_google_sheet(sheet, username, "user", user_message)
+        save_to_google_sheet(sheet, username, "assistant", bot_reply)
 
         return jsonify({"reply": bot_reply})
 
@@ -167,8 +228,6 @@ def api():
         print(f"Lỗi: {e}")
         return jsonify({"error": "Có lỗi xảy ra khi kết nối OpenAI"}), 500
 
-
 if __name__ == '__main__':
-    # Lấy cổng từ biến môi trường, nếu không có thì mặc định là 5000
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)

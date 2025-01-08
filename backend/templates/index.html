@@ -12,7 +12,23 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <div id="chat-container">
+    <div id="auth-container">
+        <h1>Chat CBD</h1>
+        <div id="register-form" class="form">
+            <h2>Đăng ký</h2>
+            <input type="text" id="register-username" placeholder="Tên đăng nhập" required>
+            <input type="password" id="register-password" placeholder="Mật khẩu" required>
+            <button id="register-btn">Đăng ký</button>
+        </div>
+        <div id="login-form" class="form">
+            <h2>Đăng nhập</h2>
+            <input type="text" id="login-username" placeholder="Tên đăng nhập" required>
+            <input type="password" id="login-password" placeholder="Mật khẩu" required>
+            <button id="login-btn">Đăng nhập</button>
+        </div>
+    </div>
+
+    <div id="chat-container" class="hidden">
         <button id="theme-toggle-button">🌙</button> <!-- Nút chuyển chế độ -->
         <div id="chatbox">
             <div id="messages"></div>
@@ -22,6 +38,7 @@
             <button id="send-button">Gửi</button>
         </div>
     </div>
+
     <!-- Link to your script.js -->
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
