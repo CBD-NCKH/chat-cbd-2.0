@@ -64,21 +64,27 @@ def get_user_conversation(sheet, username, max_rows=4):
     user_rows = [row for row in rows if len(row) >= 3 and row[0] == username]
     return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
 
+
 # Tạo thư mục lưu session nếu chưa tồn tại
 try:
-    if not os.path.exists('/tmp/flask_session'):
-        os.makedirs('/tmp/flask_session')
+    session_dir = '/tmp/flask_session'  # Thư mục lưu session
+    if not os.path.exists(session_dir):
+        os.makedirs(session_dir)  # Tạo thư mục nếu chưa tồn tại
+
     # Kiểm tra quyền ghi
-    if not os.access('/tmp/flask_session', os.W_OK):
-        raise PermissionError("Thư mục /tmp/flask_session không có quyền ghi. Vui lòng kiểm tra lại quyền truy cập.")
+    if not os.access(session_dir, os.W_OK):
+        raise PermissionError(f"Thư mục {session_dir} không có quyền ghi. Vui lòng kiểm tra lại quyền truy cập.")
 except Exception as e:
     print(f"Lỗi khi thiết lập thư mục session: {e}")
+    raise e  # Ném lỗi để ngăn ứng dụng chạy khi cấu hình sai
 
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates')
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey')
+
+# Cấu hình session cho Flask
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey')  # Khóa bí mật
 app.config['SESSION_TYPE'] = 'filesystem'  # Lưu session trong file hệ thống
-app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Thư mục lưu trữ session
+app.config['SESSION_FILE_DIR'] = session_dir  # Thư mục lưu trữ session
 app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
 app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
 
