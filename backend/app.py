@@ -207,17 +207,27 @@ def register():
 # API xử lý đăng nhập
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
+    try:
+        print("Request received at /login")
+        data = request.json
+        print(f"Request data: {data}")
 
-    sheet = connect_google_sheet("ChatHistory")
-    if authenticate_user(sheet, username, password):
-        session['username'] = username
-        session['password'] = password
-        return jsonify({"message": "Login successful."}), 200
-    else:
-        return jsonify({"error": "Invalid username or password."}), 401
+        username = data.get("username")
+        password = data.get("password")
+        print(f"Username: {username}, Password: {password}")
+
+        sheet = connect_google_sheet("ChatHistory")
+        if authenticate_user(sheet, username, password):
+            session['username'] = username
+            session['password'] = password
+            print(f"User {username} logged in successfully")
+            return jsonify({"message": "Login successful."}), 200
+        else:
+            print("Invalid username or password")
+            return jsonify({"error": "Invalid username or password."}), 401
+    except Exception as e:
+        print(f"Error in /login: {e}")
+        return jsonify({"error": "Internal server error."}), 500
 
 # API xử lý tin nhắn
 @app.route('/api', methods=['POST'])
