@@ -70,6 +70,12 @@ app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey')
 app.config['SESSION_TYPE'] = 'filesystem'  # Lưu session trong file hệ thống
 app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Thư mục lưu trữ session
 app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
+app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
+
+# Tạo thư mục lưu session nếu chưa tồn tại
+if not os.path.exists(app.config['SESSION_FILE_DIR']):
+    os.makedirs(app.config['SESSION_FILE_DIR'])
+
 Session(app)
 
 CORS(app, resources={r"/api/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
