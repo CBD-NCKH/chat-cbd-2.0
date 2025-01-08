@@ -88,6 +88,7 @@ app.config['SESSION_TYPE'] = 'filesystem'  # Lưu session trong file hệ thốn
 app.config['SESSION_FILE_DIR'] = session_dir  # Thư mục lưu trữ session
 app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
 app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
+app.config['SESSION_COOKIE_NAME'] = 'session'  # Tên cookie của session
 
 # Ghi đè phương thức set_cookie để đảm bảo giá trị là string
 
@@ -96,13 +97,18 @@ class CustomSessionInterface(SecureCookieSessionInterface):
         if not session:
             self.session_store.delete(session.sid)
             return
-        # Bảo đảm session ID là string
-        session.sid = session.sid.decode('utf-8') if isinstance(session.sid, bytes) else session.sid
+        # Kiểm tra và log trước khi chuyển đổi
+        if isinstance(session.sid, bytes):
+            print(f"Converting session ID from bytes to string: {session.sid}")
+            session.sid = session.sid.decode('utf-8')  # Chuyển từ bytes sang string
+        if not isinstance(session.sid, str):
+            raise TypeError(f"Session ID must be a string, got {type(session.sid)}")
         super(CustomSessionInterface, self).save_session(app, session, response)
 
 app.session_interface = CustomSessionInterface()
 
 Session(app)
+
 
 CORS(app, resources={r"/api/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
@@ -241,14 +247,13 @@ def api():
                     "role": "system",
                     "content": (
                         "Bạn là một trợ lý ảo (tên là ChatCBD 3.0, do Châu Phúc Khang và Trần Hoàng Thiên Phúc phát triển) chuyên hỗ trợ các câu hỏi liên quan đến Calculus BC. "
-                        "Bạn có cơ sở dữ liệu chứa các lý thuyết và kiến thức toán học liên quan. "
-                        "Khi trả lời câu hỏi: "
-                        "1. Phân chia câu trả lời thành 2 phần rõ ràng: "
+                        "Bạn có cơ sở dữ liệu chứa các lý thuyết và kiến thức toán học liên quan nhưng chỉ cần truy cập vào kho này nếu câu hỏi là về toántoán. "
+                        "1. Khi trả lời câu hỏi liên quan đến toán cần phân chia câu trả lời thành 2 phần rõ ràng: "
                         "   - Phần 1: Trích dẫn cụ thể các lý thuyết có liên quan trực tiếp từ cơ sở dữ liệu của bạn (có thể bao gồm các định nghĩa, công thức) hoặc đoạn nội dung liên quan. Lưu ý phần trích dẫn bằng tiếng anh thì bỏ trong ngoặc kép đóng lại và bên cạnh đó ghi thêm 1 phần bản dịch của phần trích dẫn đó ngay tiếp theotheo"
                         "Nếu không có kiến thức trong cơ sở dữ liệu, nhấn mạnh rằng 'Dù kiến thức này không thuộc cơ sở dữ liệu của tôi, tôi vẫn có thể hỗ trợ bạn với đầy đủ thông tin.' "
                         "   - Phần 2: Mở rộng giải thích, diễn dài và chi tiết, sử dụng ngôn ngữ dễ hiểu để trình bày nội dung trong phần 1, có thể kèm thêm ví dụ thực tế hoặc bài toán mẫu. "
                         "Nếu thông tin không có trong phần 1, sẽ tìm kiếm và hỗ trợ bằng các nguồn thông tin đáng tin cậy từ bên ngoài. "
-                        "2. Nêu rõ kiến thức đó thuộc **topic** nào (trong 31 chủ đề sau: Differential calculus (rates of change), Integral calculus (areas under curves), Fundamental Theorem of Calculus, Definitions and properties (domain, range), Methods of representing functions (tables, equations, graphs), Combining and transforming functions, Special types like polynomial, exponential, logarithmic, and trigonometric functions, Sum, difference, double-angle, and half-angle formulas, Pythagorean identities and inverse trigonometric functions, Special values and graph properties of trigonometric functions, Formal definitions (ε-δ definition), Types of limits (one-sided, infinite), Continuity and types of discontinuities, Limit laws and frequently encountered limits, Definition and interpretation (slope of tangent, instantaneous rate of change), Rules for differentiation (product, quotient, chain rules), Derivatives of common functions, including trigonometric, inverse trigonometric, and logarithmic functions, Implicit differentiation and applications, Notations and higher-order derivatives, Tangent line approximations, Motion analysis (displacement, velocity, acceleration), Maxima and minima, critical points, Second derivative test and points of inflection, Intermediate Value Theorem, Rolle’s Theorem, Mean Value Theorem, L'Hôpital's Rule for evaluating indeterminate limits, Using derivatives to analyze and sketch graphs, Identifying asymptotes, intercepts, extrema, and concavity, Rules for exponents and logarithms, Mnemonics for differentiation rules). "
+                        "2. Chủ động hỏi người dùng cần biết thêm về câu hỏi gì để giúp đỡ. "
                         "3. Sử dụng ngôn ngữ thân thiện và dễ tiếp cận để khuyến khích người dùng học tập."
                     )
                 },
