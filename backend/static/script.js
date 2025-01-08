@@ -159,6 +159,7 @@ loginButton.addEventListener('click', async () => {
     const response = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
     });
 

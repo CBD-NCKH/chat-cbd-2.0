@@ -11,6 +11,9 @@ from pyvi import ViTokenizer, ViPosTagger
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
+import shutil
+
+shutil.rmtree("/tmp/flask_session", ignore_errors=True)
 
 # Tải mô hình ngôn ngữ spaCy
 nlp = spacy.load("en_core_web_sm")
@@ -110,7 +113,7 @@ app.session_interface = CustomSessionInterface()
 Session(app)
 
 
-CORS(app, resources={r"/api/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
+CORS(app, resources={r"/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
 # Hàm trích xuất từ khóa tiếng Anh
 def extract_keywords_spacy(message):
