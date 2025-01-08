@@ -2,6 +2,7 @@ import sqlite3
 from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
 from flask_session import Session
+from flask.sessions import SecureCookieSessionInterface
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -87,6 +88,19 @@ app.config['SESSION_TYPE'] = 'filesystem'  # Lưu session trong file hệ thốn
 app.config['SESSION_FILE_DIR'] = session_dir  # Thư mục lưu trữ session
 app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
 app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
+
+# Ghi đè phương thức set_cookie để đảm bảo giá trị là string
+
+class CustomSessionInterface(SecureCookieSessionInterface):
+    def save_session(self, app, session, response):
+        if not session:
+            self.session_store.delete(session.sid)
+            return
+        # Bảo đảm session ID là string
+        session.sid = session.sid.decode('utf-8') if isinstance(session.sid, bytes) else session.sid
+        super(CustomSessionInterface, self).save_session(app, session, response)
+
+app.session_interface = CustomSessionInterface()
 
 Session(app)
 
