@@ -97,7 +97,9 @@ app.config['SESSION_COOKIE_NAME'] = 'session'  # Tên cookie của session
 class CustomSessionInterface(SecureCookieSessionInterface):
     def save_session(self, app, session, response):
         if not session:
-            self.session_store.delete(session.sid)
+            # Kiểm tra và xóa session.sid nếu tồn tại
+            if hasattr(session, 'sid'):
+                self.session_store.delete(session.sid)
             return
 
         # Log giá trị session.sid trước khi xử lý
@@ -107,10 +109,10 @@ class CustomSessionInterface(SecureCookieSessionInterface):
         if isinstance(session.sid, bytes):
             try:
                 session.sid = session.sid.decode('utf-8')
-                print("Session ID converted from bytes to string.")
+                print("Session ID successfully converted from bytes to string.")
             except Exception as e:
-                print(f"Failed to decode session ID: {e}")
-                raise TypeError(f"Failed to decode session.sid: {e}")
+                print(f"Error decoding session ID: {e}")
+                raise TypeError(f"Unable to decode session.sid: {e}")
 
         # Kiểm tra lại session.sid phải là string
         if not isinstance(session.sid, str):
@@ -129,7 +131,7 @@ app.session_interface = CustomSessionInterface()
 # Khởi tạo session
 Session(app)
 
-CORS(app, resources={r"/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
 # Hàm trích xuất từ khóa tiếng Anh
 def extract_keywords_spacy(message):
