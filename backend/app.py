@@ -92,7 +92,6 @@ app.config['SESSION_FILE_DIR'] = session_dir  # Thư mục lưu trữ session
 app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
 app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
 app.config['SESSION_COOKIE_NAME'] = 'session'  # Tên cookie của session
-
 # Ghi đè phương thức set_cookie để đảm bảo giá trị là string
 
 class CustomSessionInterface(SecureCookieSessionInterface):
@@ -101,24 +100,34 @@ class CustomSessionInterface(SecureCookieSessionInterface):
             self.session_store.delete(session.sid)
             return
 
-        # Log giá trị session.sid
-        print(f"Original session.sid: {session.sid}, type: {type(session.sid)}")
+        # Log giá trị session.sid trước khi xử lý
+        print(f"Before conversion: session.sid = {session.sid}, type = {type(session.sid)}")
 
-        # Chuyển đổi nếu cần
+        # Chuyển đổi session.sid sang string nếu cần
         if isinstance(session.sid, bytes):
-            print("Converting session ID from bytes to string")
-            session.sid = session.sid.decode('utf-8')
+            try:
+                session.sid = session.sid.decode('utf-8')
+                print("Session ID converted from bytes to string.")
+            except Exception as e:
+                print(f"Failed to decode session ID: {e}")
+                raise TypeError(f"Failed to decode session.sid: {e}")
 
+        # Kiểm tra lại session.sid phải là string
         if not isinstance(session.sid, str):
             raise TypeError(f"Session ID must be a string, got {type(session.sid)}")
 
+        # Log giá trị session.sid sau khi xử lý
+        print(f"After conversion: session.sid = {session.sid}, type = {type(session.sid)}")
+
+        # Gọi hàm save_session của lớp cha
         super(CustomSessionInterface, self).save_session(app, session, response)
 
 
+# Thiết lập CustomSessionInterface cho Flask app
 app.session_interface = CustomSessionInterface()
 
+# Khởi tạo session
 Session(app)
-
 
 CORS(app, resources={r"/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
