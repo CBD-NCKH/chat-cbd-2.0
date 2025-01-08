@@ -100,13 +100,20 @@ class CustomSessionInterface(SecureCookieSessionInterface):
         if not session:
             self.session_store.delete(session.sid)
             return
-        # Kiểm tra và log trước khi chuyển đổi
+
+        # Log giá trị session.sid
+        print(f"Original session.sid: {session.sid}, type: {type(session.sid)}")
+
+        # Chuyển đổi nếu cần
         if isinstance(session.sid, bytes):
-            print(f"Converting session ID from bytes to string: {session.sid}")
-            session.sid = session.sid.decode('utf-8')  # Chuyển từ bytes sang string
+            print("Converting session ID from bytes to string")
+            session.sid = session.sid.decode('utf-8')
+
         if not isinstance(session.sid, str):
             raise TypeError(f"Session ID must be a string, got {type(session.sid)}")
+
         super(CustomSessionInterface, self).save_session(app, session, response)
+
 
 app.session_interface = CustomSessionInterface()
 
