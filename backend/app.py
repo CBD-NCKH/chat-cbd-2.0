@@ -64,6 +64,16 @@ def get_user_conversation(sheet, username, max_rows=4):
     user_rows = [row for row in rows if len(row) >= 3 and row[0] == username]
     return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
 
+# Tạo thư mục lưu session nếu chưa tồn tại
+try:
+    if not os.path.exists('/tmp/flask_session'):
+        os.makedirs('/tmp/flask_session')
+    # Kiểm tra quyền ghi
+    if not os.access('/tmp/flask_session', os.W_OK):
+        raise PermissionError("Thư mục /tmp/flask_session không có quyền ghi. Vui lòng kiểm tra lại quyền truy cập.")
+except Exception as e:
+    print(f"Lỗi khi thiết lập thư mục session: {e}")
+
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey')
@@ -71,10 +81,6 @@ app.config['SESSION_TYPE'] = 'filesystem'  # Lưu session trong file hệ thốn
 app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Thư mục lưu trữ session
 app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
 app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
-
-# Tạo thư mục lưu session nếu chưa tồn tại
-if not os.path.exists(app.config['SESSION_FILE_DIR']):
-    os.makedirs(app.config['SESSION_FILE_DIR'])
 
 Session(app)
 
@@ -195,7 +201,21 @@ def api():
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "Bạn là một trợ lý ảo thông minh."},
+                {
+                    "role": "system",
+                    "content": (
+                        "Bạn là một trợ lý ảo (tên là ChatCBD 3.0, do Châu Phúc Khang và Trần Hoàng Thiên Phúc phát triển) chuyên hỗ trợ các câu hỏi liên quan đến Calculus BC. "
+                        "Bạn có cơ sở dữ liệu chứa các lý thuyết và kiến thức toán học liên quan. "
+                        "Khi trả lời câu hỏi: "
+                        "1. Phân chia câu trả lời thành 2 phần rõ ràng: "
+                        "   - Phần 1: Trích dẫn cụ thể các lý thuyết có liên quan trực tiếp từ cơ sở dữ liệu của bạn (có thể bao gồm các định nghĩa, công thức) hoặc đoạn nội dung liên quan. Lưu ý phần trích dẫn bằng tiếng anh thì bỏ trong ngoặc kép đóng lại và bên cạnh đó ghi thêm 1 phần bản dịch của phần trích dẫn đó ngay tiếp theotheo"
+                        "Nếu không có kiến thức trong cơ sở dữ liệu, nhấn mạnh rằng 'Dù kiến thức này không thuộc cơ sở dữ liệu của tôi, tôi vẫn có thể hỗ trợ bạn với đầy đủ thông tin.' "
+                        "   - Phần 2: Mở rộng giải thích, diễn dài và chi tiết, sử dụng ngôn ngữ dễ hiểu để trình bày nội dung trong phần 1, có thể kèm thêm ví dụ thực tế hoặc bài toán mẫu. "
+                        "Nếu thông tin không có trong phần 1, sẽ tìm kiếm và hỗ trợ bằng các nguồn thông tin đáng tin cậy từ bên ngoài. "
+                        "2. Nêu rõ kiến thức đó thuộc **topic** nào (trong 31 chủ đề sau: Differential calculus (rates of change), Integral calculus (areas under curves), Fundamental Theorem of Calculus, Definitions and properties (domain, range), Methods of representing functions (tables, equations, graphs), Combining and transforming functions, Special types like polynomial, exponential, logarithmic, and trigonometric functions, Sum, difference, double-angle, and half-angle formulas, Pythagorean identities and inverse trigonometric functions, Special values and graph properties of trigonometric functions, Formal definitions (ε-δ definition), Types of limits (one-sided, infinite), Continuity and types of discontinuities, Limit laws and frequently encountered limits, Definition and interpretation (slope of tangent, instantaneous rate of change), Rules for differentiation (product, quotient, chain rules), Derivatives of common functions, including trigonometric, inverse trigonometric, and logarithmic functions, Implicit differentiation and applications, Notations and higher-order derivatives, Tangent line approximations, Motion analysis (displacement, velocity, acceleration), Maxima and minima, critical points, Second derivative test and points of inflection, Intermediate Value Theorem, Rolle’s Theorem, Mean Value Theorem, L'Hôpital's Rule for evaluating indeterminate limits, Using derivatives to analyze and sketch graphs, Identifying asymptotes, intercepts, extrema, and concavity, Rules for exponents and logarithms, Mnemonics for differentiation rules). "
+                        "3. Sử dụng ngôn ngữ thân thiện và dễ tiếp cận để khuyến khích người dùng học tập."
+                    )
+                },
                 {"role": "user", "content": context}
             ],
             max_tokens=16384,
