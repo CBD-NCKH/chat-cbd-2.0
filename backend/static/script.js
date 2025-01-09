@@ -132,42 +132,55 @@ themeToggleButton.addEventListener('click', () => {
     themeToggleButton.textContent = body.classList.contains('light-mode') ? '🌞' : '🌙';
 });
 
-// Xử lý sự kiện Đăng ký
-registerButton.addEventListener('click', async () => {
-    const username = document.getElementById('register-username').value;
-    const password = document.getElementById('register-password').value;
-
-    const response = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-        alert('Đăng ký thành công! Bạn có thể đăng nhập.');
-    } else {
-        alert(data.error || 'Đăng ký thất bại.');
-    }
-});
-
 // Xử lý sự kiện Đăng nhập
 loginButton.addEventListener('click', async () => {
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
 
-    const response = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username, password }),
-    });
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
 
-    const data = await response.json();
-    if (response.ok) {
-        alert('Đăng nhập thành công!');
-        showChat();
-    } else {
-        alert(data.error || 'Đăng nhập thất bại.');
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Đăng nhập thành công!');
+            window.location.href = data.redirect_url;  // Điều hướng đến URL mới
+        } else {
+            alert(data.error || 'Đăng nhập thất bại.');
+        }
+    } catch (error) {
+        console.error('Đăng nhập thất bại:', error);
+        alert('Đăng nhập thất bại.');
     }
 });
+
+// Xử lý sự kiện Đăng ký
+registerButton.addEventListener('click', async () => {
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Đăng ký thành công!');
+            window.location.href = data.redirect_url;  // Điều hướng đến URL mới
+        } else {
+            alert(data.error || 'Đăng ký thất bại.');
+        }
+    } catch (error) {
+        console.error('Đăng ký thất bại:', error);
+        alert('Đăng ký thất bại.');
+    }
+});
+

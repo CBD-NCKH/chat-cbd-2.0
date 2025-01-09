@@ -69,67 +69,9 @@ def get_user_conversation(sheet, username, max_rows=4):
     return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
 
 
-# Tạo thư mục lưu session nếu chưa tồn tại
-try:
-    session_dir = '/tmp/flask_session'  # Thư mục lưu session
-    if not os.path.exists(session_dir):
-        os.makedirs(session_dir)  # Tạo thư mục nếu chưa tồn tại
-
-    # Kiểm tra quyền ghi
-    if not os.access(session_dir, os.W_OK):
-        raise PermissionError(f"Thư mục {session_dir} không có quyền ghi. Vui lòng kiểm tra lại quyền truy cập.")
-except Exception as e:
-    print(f"Lỗi khi thiết lập thư mục session: {e}")
-    raise e  # Ném lỗi để ngăn ứng dụng chạy khi cấu hình sai
-
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates')
 
-# Cấu hình session cho Flask
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey')  # Khóa bí mật
-app.config['SESSION_TYPE'] = 'filesystem'  # Lưu session trong file hệ thống
-app.config['SESSION_FILE_DIR'] = session_dir  # Thư mục lưu trữ session
-app.config['SESSION_PERMANENT'] = False  # Không giữ session vĩnh viễn
-app.config['SESSION_USE_SIGNER'] = True  # Bảo mật session với chữ ký
-app.config['SESSION_COOKIE_NAME'] = 'session'  # Tên cookie của session
-# Ghi đè phương thức set_cookie để đảm bảo giá trị là string
-
-class CustomSessionInterface(SecureCookieSessionInterface):
-    def save_session(self, app, session, response):
-        if not session:
-            # Kiểm tra và xóa session.sid nếu tồn tại
-            if hasattr(session, 'sid'):
-                self.session_store.delete(session.sid)
-            return
-
-        # Log giá trị session.sid trước khi xử lý
-        print(f"Before conversion: session.sid = {session.sid}, type = {type(session.sid)}")
-
-        # Chuyển đổi session.sid sang string nếu cần
-        if isinstance(session.sid, bytes):
-            try:
-                session.sid = session.sid.decode('utf-8')
-                print("Session ID successfully converted from bytes to string.")
-            except Exception as e:
-                print(f"Error decoding session ID: {e}")
-                raise TypeError(f"Unable to decode session.sid: {e}")
-
-        # Kiểm tra lại session.sid phải là string
-        if not isinstance(session.sid, str):
-            raise TypeError(f"Session ID must be a string, got {type(session.sid)}")
-
-        # Log giá trị session.sid sau khi xử lý
-        print(f"After conversion: session.sid = {session.sid}, type = {type(session.sid)}")
-
-        # Gọi hàm save_session của lớp cha
-        super(CustomSessionInterface, self).save_session(app, session, response)
-
-
-# Thiết lập CustomSessionInterface cho Flask app
-app.session_interface = CustomSessionInterface()
-
-# Khởi tạo session
-Session(app)
 
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "https://chat-cbd-2-0.onrender.com"}})
 
@@ -200,6 +142,16 @@ def handle_exception(error):
 def home():
     return render_template('index.html')
 
+# Route sau khi đăng nhậpnhập để render giao diện
+@app.route('/chat', methods=['GET'])
+def chat():
+    username = request.args.get("username") 
+    if not username:
+        return "Missing username parameter", 400  
+
+    return render_template("chat.html", username=username)
+
+
 # API xử lý đăng ký
 @app.route('/register', methods=['POST'])
 def register():
@@ -211,7 +163,7 @@ def register():
     success, message = create_account(sheet, username, password)
 
     if success:
-        return jsonify({"message": message}), 201
+        return jsonify({"message": message, "redirect_url": f"/chat?username={username}"}), 201
     else:
         return jsonify({"error": message}), 400
 
@@ -229,10 +181,8 @@ def login():
 
         sheet = connect_google_sheet("ChatHistory")
         if authenticate_user(sheet, username, password):
-            session['username'] = username
-            session['password'] = password
             print(f"User {username} logged in successfully")
-            return jsonify({"message": "Login successful."}), 200
+            return jsonify({"message": "Login successful.", "redirect_url": f"/chat?username={username}"}), 200
         else:
             print("Invalid username or password")
             return jsonify({"error": "Invalid username or password."}), 401
@@ -244,16 +194,11 @@ def login():
 @app.route('/api', methods=['POST'])
 def api():
     try:
-        if 'username' not in session or 'password' not in session:
-            return jsonify({"error": "Unauthorized. Please log in first."}), 401
-
-        username = session['username']
-        password = session['password']
+        username = request.args.get('username')
+        if not username:
+            return jsonify({"error": "Unauthorized. Username is missing."}), 401
 
         sheet = connect_google_sheet("ChatHistory")
-
-        if not authenticate_user(sheet, username, password):
-            return jsonify({"error": "Authentication failed."}), 401
 
         data = request.json
         user_message = data.get("message")
