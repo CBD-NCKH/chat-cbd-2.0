@@ -60,7 +60,11 @@ def authenticate_user(sheet, username, password):
 
 # Hàm lưu lịch sử hội thoại vào Google Sheets
 def save_to_google_sheet(sheet, username, role, content):
-    sheet.append_row([username, role, content])
+    row = [""] * 4  # Tạo hàng trống với 4 cột
+    row[0] = username  # Lưu username vào cột 1
+    row[2] = role      # Lưu role vào cột 3
+    row[3] = content   # Lưu content vào cột 4
+    sheet.append_row(row)  # Thêm hàng mới vào Google Sheets
 
 # Hàm lấy hội thoại gần nhất của người dùng
 def get_user_conversation(sheet, username, max_rows=4):
@@ -173,21 +177,16 @@ def login():
     try:
         print("Request received at /login")
         data = request.json
-        print(f"Request data: {data}")
 
         username = data.get("username")
         password = data.get("password")
-        print(f"Username: {username}, Password: {password}")
 
         sheet = connect_google_sheet("ChatHistory")
         if authenticate_user(sheet, username, password):
-            print(f"User {username} logged in successfully")
-            return jsonify({"message": "Login successful.", "redirect_url": f"/chat?username={username}"}), 200
+            return jsonify({"redirect_url": f"/chat?username={username}"}), 200
         else:
-            print("Invalid username or password")
             return jsonify({"error": "Invalid username or password."}), 401
     except Exception as e:
-        print(f"Error in /login: {e}")
         return jsonify({"error": "Internal server error."}), 500
 
 # API xử lý tin nhắn

@@ -299,3 +299,17 @@ body.light-mode .typing-indicator span {
         transform: translateY(-8px);
     }
 }
+
+/* Chào mừng */
+#welcome-message {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+    color: #eaeaea;
+    z-index: 2;
+}
+
+body.light-mode #welcome-message {
+    color: #000;
+}
