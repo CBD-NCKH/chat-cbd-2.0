@@ -149,7 +149,7 @@ def chat():
     if not username:
         return "Missing username parameter", 400  
 
-    return render_template("chatchat.html", username=username)
+    return render_template("chat.html", username=username)
 
 
 # API xử lý đăng ký
