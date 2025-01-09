@@ -142,14 +142,14 @@ def handle_exception(error):
 def home():
     return render_template('index.html')
 
-# Route sau khi đăng nhậpnhập để render giao diện
+# Route sau khi đăng nhập để render giao diện
 @app.route('/chat', methods=['GET'])
 def chat():
     username = request.args.get("username") 
     if not username:
         return "Missing username parameter", 400  
 
-    return render_template("chat.html", username=username)
+    return render_template("index.html", username=username)
 
 
 # API xử lý đăng ký
