@@ -167,7 +167,7 @@ def register():
     success, message = create_account(sheet, username, password)
 
     if success:
-        return jsonify({"message": message, "redirect_url": f"/chat?username={username}"}), 201
+        return jsonify({"redirect_url": f"/chat?username={username}"}), 201
     else:
         return jsonify({"error": message}), 400
 
@@ -198,12 +198,16 @@ def api():
             return jsonify({"error": "Unauthorized. Username is missing."}), 401
 
         sheet = connect_google_sheet("ChatHistory")
+        print(f"Connected to Google Sheet for user: {username}")
 
         data = request.json
         user_message = data.get("message")
 
         memory = get_user_conversation(sheet, username, max_rows=4)
-        memory_context = "\n".join([f"{row[1]}: {row[2]}" for row in memory if len(row) >= 3])
+        print(f"Retrieved memory: {memory}")
+
+        memory_context = "\n".join([f"{row[2]}: {row[3]}" for row in memory if len(row) >= 4])
+        print(f"Memory context: {memory_context}")
 
         keywords = extract_keywords_multilingual(user_message)
         db_result = query_sqlite_with_keywords("DatasetTable", keywords)
