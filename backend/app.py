@@ -13,8 +13,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
 import shutil
 
-shutil.rmtree("/tmp/flask_session", ignore_errors=True)
-
 # Tải mô hình ngôn ngữ spaCy
 nlp = spacy.load("en_core_web_sm")
 
