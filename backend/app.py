@@ -1,8 +1,6 @@
 import sqlite3
 from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
-from flask_session import Session
-from flask.sessions import SecureCookieSessionInterface
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -11,7 +9,6 @@ from pyvi import ViTokenizer, ViPosTagger
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
-import shutil
 
 # Tải mô hình ngôn ngữ spaCy
 nlp = spacy.load("en_core_web_sm")
