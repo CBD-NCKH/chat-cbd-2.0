@@ -7,8 +7,72 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script> <!-- Socket.IO Client -->
+    <style>
+        /* Đảm bảo phần chat_1 được ẩn đi ban đầu */
+        #chat-container_1 {
+            display: none; /* Ẩn phần chat_1 ban đầu */
+            width: 350px;
+            height: 500px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #2c2c2c;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            flex-direction: column;
+            display: flex;
+        }
+
+        #messages_1 {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            color: #fff;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+        }
+
+        #user-input_1 {
+            padding: 10px;
+            font-size: 14px;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Avatar */
+        #avatar_1 {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #ffffff; /* Thay đổi thành màu trắng */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #avatar_1 img {
+            display: none; /* Ẩn hình ảnh */
+        }
+    </style>
 </head>
 <body>
+    <!-- Avatar nhỏ ở góc dưới bên phải -->
+    <div id="avatar_1" onclick="toggleChat_1()">
+        <!-- Chỉ hiển thị vòng tròn màu trắng, không cần hình ảnh -->
+    </div>
+
+    <!-- Phần chat_1 -->
+    <div id="chat-container_1">
+        <div id="messages_1"></div>
+        <textarea id="user-input_1" placeholder="Nhập tin nhắn..."></textarea>
+        <button id="send-button_1">Gửi</button>
+    </div>
+
     <div id="chat-container">
         <button id="theme-toggle-button">🌙</button>
         <div id="welcome-message">
@@ -21,8 +85,75 @@
             <input type="text" id="user-input" placeholder="Nhập tin nhắn...">
             <button id="send-button">Gửi</button>
         </div>
-    </div>    
+    </div>
 
-    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Khởi tạo kết nối với server WebSocket cho phần chat_1
+        const socket_1 = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
+
+        // Hiển thị/ẩn phần chat_1 khi nhấn vào avatar
+        function toggleChat() {
+            const chatContainer_1 = document.getElementById('chat-container_1');
+            chatContainer_1.style.display = (chatContainer_1.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        // Xử lý khi người dùng nhấn nút "Gửi" trong phần chat_1
+        document.getElementById("send-button_1").addEventListener("click", function () {
+            const userInput_1 = document.getElementById("user-input_1").value;
+            if (!userInput_1.trim()) return;
+
+            addMessage_1(userInput_1, 'user'); 
+            socket.emit('send_message', { username: 'Guest', message: userInput_1 }); // Gửi tin nhắn đến server
+            document.getElementById("user-input_1").value = ""; // Xóa input
+        });
+
+        // Lắng nghe sự kiện 'receive_message' để nhận tin nhắn từ server
+        socket.on('receive_message', function(data) {
+            const { bot } = data;
+            addMessage_1(bot, 'bot');  // Chỉ hiển thị tin nhắn của bot
+        });
+
+        // Hàm thêm tin nhắn vào giao diện trong phần chat_1
+        function addMessage_1(content, sender) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", sender);
+            messageDiv.innerHTML = content.replace(/\n/g, "<br>");
+            document.getElementById("messages_1").appendChild(messageDiv);
+        }
+
+        // Khởi tạo kết nối với server WebSocket cho phần chat gốc
+        const socket = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
+        
+        // Hiển thị/ẩn phần chat khi nhấn vào avatar
+        function toggleChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.style.display = (chatContainer.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        // Xử lý khi người dùng nhấn nút "Gửi" trong phần chat gốc
+        document.getElementById("send-button").addEventListener("click", function () {
+            const userInput = document.getElementById("user-input").value;
+            if (!userInput.trim()) return;
+
+            addMessage(userInput, 'user'); 
+            socket.emit('send_message', { username: 'Guest', message: userInput }); // Gửi tin nhắn đến server
+            document.getElementById("user-input").value = ""; // Xóa input
+        });
+
+        // Lắng nghe sự kiện 'receive_message' để nhận tin nhắn từ server
+        socket.on('receive_message', function(data) {
+            const { bot } = data;
+            addMessage(bot, 'bot');  // Chỉ hiển thị tin nhắn của bot
+        });
+
+        // Hàm thêm tin nhắn vào giao diện trong phần chat gốc
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", sender);
+            messageDiv.innerHTML = content.replace(/\n/g, "<br>");
+            document.getElementById("messages").appendChild(messageDiv);
+        }
+    </script>
+
 </body>
 </html>
