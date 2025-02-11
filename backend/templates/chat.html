@@ -88,71 +88,73 @@
     </div>
 
     <script>
-        // Khởi tạo kết nối với server WebSocket cho phần chat_1
-        const socket_1 = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
+        window.onload = function() {
+            // Khởi tạo kết nối với server WebSocket cho phần chat_1
+            const socket = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
 
-        // Hiển thị/ẩn phần chat_1 khi nhấn vào avatar
-        function toggleChat() {
-            const chatContainer_1 = document.getElementById('chat-container_1');
-            chatContainer_1.style.display = (chatContainer_1.style.display === 'flex') ? 'none' : 'flex';
-        }
+            // Hiển thị/ẩn phần chat_1 khi nhấn vào avatar
+            function toggleChat() {
+                const chatContainer_1 = document.getElementById('chat-container_1');
+                chatContainer_1.style.display = (chatContainer_1.style.display === 'flex') ? 'none' : 'flex';
+            }
 
-        // Xử lý khi người dùng nhấn nút "Gửi" trong phần chat_1
-        document.getElementById("send-button_1").addEventListener("click", function () {
-            const userInput_1 = document.getElementById("user-input_1").value;
-            if (!userInput_1.trim()) return;
+            // Xử lý khi người dùng nhấn nút "Gửi" trong phần chat_1
+            document.getElementById("send-button_1").addEventListener("click", function () {
+                const userInput_1 = document.getElementById("user-input_1").value;
+                if (!userInput_1.trim()) return;
 
-            addMessage_1(userInput_1, 'user'); 
-            socket.emit('send_message', { username: 'Guest', message: userInput_1 }); // Gửi tin nhắn đến server
-            document.getElementById("user-input_1").value = ""; // Xóa input
-        });
+                addMessage_1(userInput_1, 'user'); 
+                socket.emit('send_message', { username: 'Guest', message: userInput_1 }); // Gửi tin nhắn đến server
+                document.getElementById("user-input_1").value = ""; // Xóa input
+            });
 
-        // Lắng nghe sự kiện 'receive_message' để nhận tin nhắn từ server
-        socket.on('receive_message', function(data) {
-            const { bot } = data;
-            addMessage_1(bot, 'bot');  // Chỉ hiển thị tin nhắn của bot
-        });
+            // Lắng nghe sự kiện 'receive_message' để nhận tin nhắn từ server
+            socket.on('receive_message', function(data) {
+                const { bot } = data;
+                addMessage_1(bot, 'bot');  // Chỉ hiển thị tin nhắn của bot
+            });
 
-        // Hàm thêm tin nhắn vào giao diện trong phần chat_1
-        function addMessage_1(content, sender) {
-            const messageDiv = document.createElement("div");
-            messageDiv.classList.add("message", sender);
-            messageDiv.innerHTML = content.replace(/\n/g, "<br>");
-            document.getElementById("messages_1").appendChild(messageDiv);
-        }
+            // Hàm thêm tin nhắn vào giao diện trong phần chat_1
+            function addMessage_1(content, sender) {
+                const messageDiv = document.createElement("div");
+                messageDiv.classList.add("message", sender);
+                messageDiv.innerHTML = content.replace(/\n/g, "<br>");
+                document.getElementById("messages_1").appendChild(messageDiv);
+            }
 
-        // Khởi tạo kết nối với server WebSocket cho phần chat gốc
-        const socket = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
-        
-        // Hiển thị/ẩn phần chat khi nhấn vào avatar
-        function toggleChat() {
-            const chatContainer = document.getElementById('chat-container');
-            chatContainer.style.display = (chatContainer.style.display === 'flex') ? 'none' : 'flex';
-        }
+            // Khởi tạo kết nối với server WebSocket cho phần chat gốc
+            const socket = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
+            
+            // Hiển thị/ẩn phần chat khi nhấn vào avatar
+            function toggleChat() {
+                const chatContainer = document.getElementById('chat-container');
+                chatContainer.style.display = (chatContainer.style.display === 'flex') ? 'none' : 'flex';
+            }
 
-        // Xử lý khi người dùng nhấn nút "Gửi" trong phần chat gốc
-        document.getElementById("send-button").addEventListener("click", function () {
-            const userInput = document.getElementById("user-input").value;
-            if (!userInput.trim()) return;
+            // Xử lý khi người dùng nhấn nút "Gửi" trong phần chat gốc
+            document.getElementById("send-button").addEventListener("click", function () {
+                const userInput = document.getElementById("user-input").value;
+                if (!userInput.trim()) return;
 
-            addMessage(userInput, 'user'); 
-            socket.emit('send_message', { username: 'Guest', message: userInput }); // Gửi tin nhắn đến server
-            document.getElementById("user-input").value = ""; // Xóa input
-        });
+                addMessage(userInput, 'user'); 
+                socket.emit('send_message', { username: 'Guest', message: userInput }); // Gửi tin nhắn đến server
+                document.getElementById("user-input").value = ""; // Xóa input
+            });
 
-        // Lắng nghe sự kiện 'receive_message' để nhận tin nhắn từ server
-        socket.on('receive_message', function(data) {
-            const { bot } = data;
-            addMessage(bot, 'bot');  // Chỉ hiển thị tin nhắn của bot
-        });
+            // Lắng nghe sự kiện 'receive_message' để nhận tin nhắn từ server
+            socket.on('receive_message', function(data) {
+                const { bot } = data;
+                addMessage(bot, 'bot');  // Chỉ hiển thị tin nhắn của bot
+            });
 
-        // Hàm thêm tin nhắn vào giao diện trong phần chat gốc
-        function addMessage(content, sender) {
-            const messageDiv = document.createElement("div");
-            messageDiv.classList.add("message", sender);
-            messageDiv.innerHTML = content.replace(/\n/g, "<br>");
-            document.getElementById("messages").appendChild(messageDiv);
-        }
+            // Hàm thêm tin nhắn vào giao diện trong phần chat gốc
+            function addMessage(content, sender) {
+                const messageDiv = document.createElement("div");
+                messageDiv.classList.add("message", sender);
+                messageDiv.innerHTML = content.replace(/\n/g, "<br>");
+                document.getElementById("messages").appendChild(messageDiv);
+            }
+        };
     </script>
 
 </body>
