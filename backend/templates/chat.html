@@ -121,9 +121,6 @@
                 messageDiv.innerHTML = content.replace(/\n/g, "<br>");
                 document.getElementById("messages_1").appendChild(messageDiv);
             }
-
-            // Khởi tạo kết nối với server WebSocket cho phần chat gốc
-            const socket = io.connect('https://code-supporter-2-0.onrender.com');  // Đảm bảo URL chính xác
             
             // Hiển thị/ẩn phần chat khi nhấn vào avatar
             function toggleChat() {
